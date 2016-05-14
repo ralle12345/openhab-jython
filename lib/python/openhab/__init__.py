@@ -1,7 +1,3 @@
-import sys
-import os
-import os.path
-import fnmatch
 import functools
 import traceback
 
@@ -27,6 +23,11 @@ def log_traceback(fn):
                 traceback.print_ex()
     return wrapper
 
+# TODO make this support other notification services
+def send_notification(self, message):
+    self.log.info("Sending notification: {}", str(message))
+    oh.getAction("Pushover").pushover(str(message))
+
 def rule(clazz):
     """
     Decorator for adding OH1 Rule functionality to a class.
@@ -38,6 +39,7 @@ def rule(clazz):
         return instance
     clazz.__new__ = staticmethod(new)
     clazz.execute = log_traceback(clazz.execute)
+    clazz.send_notification = send_notification
     return clazz
 
 class OpenhabRule(Rule):
@@ -60,14 +62,14 @@ class OpenhabRule(Rule):
 
 from synchronize import make_synchronized
 
-class StartupCallback(OpenhabRule):
+@rule
+class StartupCallback(object):
     """
     This is a pseudo-rule that will execute code when the rule engine is started.
     The primary purpose is to defer execution of code that would cause otherwise
     trigger OSGI circular dependencies during the rule engine startup.
     """
     def __init__(self, callback, *args, **kwargs):
-        super(StartupCallback, self).__init__()
         self._callback = callback
         self._args = args
         self._kwargs = kwargs
@@ -78,38 +80,12 @@ class StartupCallback(OpenhabRule):
         return [ StartupTrigger() ]
     
     @make_synchronized
-    def safe_execute(self, event):
+    def execute(self, event):
         if not self._triggered:
             self._callback(*self._args, **self._kwargs)
             self._triggered = True
 
             _openhab_jars = None
-
-def _find_jars():
-    # The intention is to locate the directory where the openhab JAR files
-    # are located. These may be in different places depending on how openHAB
-    # was installed.
-    server_dir = os.getenv("OPENHAB_HOME")
-    if not server_dir:
-        raise Exception("Must specify OPENHAB_HOME environment variable")
-    for root, subdirs, files in os.walk(server_dir):
-        for f in files:
-            if f.endswith(".jar"):
-                _openhab_jars.append((f, os.path.join(root, f)))
-
-def import_jar(name_pattern):
-    # lazily discover jar locations
-    global _openhab_jars
-    if _openhab_jars is None:
-        _openhab_jars = []
-        _find_jars()
-    # find the matching jar
-    for jar_name, jar_path in _openhab_jars:
-        if fnmatch.fnmatch(jar_name, name_pattern):
-            sys.path.append(jar_path)
-            return
-    raise Exception('jar not found: {}'.format(name_pattern))
-
 
 class SingletonMeta(type):
     """
