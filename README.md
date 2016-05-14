@@ -77,7 +77,8 @@ import openhab.quartz
 # Get the default scheduler
 openhab.quartz.get_scheduler()
 
-openhab.quartz.log_jsr223_jobs()
+# Writes information about current Quartz scheduled jobs to the openHAB log file
+openhab.quartz.log_jobs()
 ```
 
 ### Jython binding support

@@ -49,7 +49,7 @@ class JobPrinter(object):
     def visit_trigger(self, scheduler, group_name, jobkey, trigger):
         log.info("      Trigger {}".format(str(trigger.getNextFireTime())))
 
-def log_jsr223_jobs(job_filter=None, group_filter=lambda group: True):
+def log_jobs(job_filter=None, group_filter=lambda group: True):
     visit_jobs(Timer.scheduler, JobPrinter(), group_filter=group_filter, job_filter=job_filter)
 
 def delete_jsr223_jobs(job_filter=None):
