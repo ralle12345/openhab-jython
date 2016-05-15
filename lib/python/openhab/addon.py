@@ -6,7 +6,6 @@ from collections import defaultdict
 
 from openhab import SingletonMeta
 from openhab.globals import oh
-from openhab.rule import OpenhabRule
 import openhab.quartz
 
 from java.util import Hashtable
@@ -55,10 +54,10 @@ class Binding(AbstractEventSubscriber, BindingConfigReader, ManagedService):
             EventHandler, self, hashtable((EventConstants.EVENT_TOPIC, ["openhab/*"]))))
         self._registrations.append(bundle_context.registerService(
             ManagedService, self, hashtable((Constants.SERVICE_PID, "org.openhab." + binding_type))))
-        self._registrations.append(bundle_context.registerService(
-            BindingConfigReader, self, hashtable()))
+        self._registrations.append(
+            bundle_context.registerService(BindingConfigReader, self, hashtable()))
         self._polling_job_key = None
-
+        
     # override
     def getBindingType(self):
         return self._binding_type
