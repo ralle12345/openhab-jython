@@ -42,24 +42,6 @@ def rule(clazz):
     clazz.send_notification = send_notification
     return clazz
 
-class OpenhabRule(Rule):
-    """
-    Rule base class that will usually give better stack traces when rule execution fails.
-    """
-    def __init__(self):
-        self.log = Openhab.getLogger(type(self).__name__)
-
-    def execute(self, event):
-        try:
-            self.safe_execute(event)
-        except Exception as ex:
-            self.log.error(type(self).__name__ + "\n" + traceback.format_exc())
-
-    # TODO make this not specific to Pushover
-    def send_notification(self, message):
-        self.log.info("Sending notification: {}", str(message))
-        oh.getAction("Pushover").pushover(str(message))
-
 from synchronize import make_synchronized
 
 @rule
@@ -84,8 +66,6 @@ class StartupCallback(object):
         if not self._triggered:
             self._callback(*self._args, **self._kwargs)
             self._triggered = True
-
-            _openhab_jars = None
 
 class SingletonMeta(type):
     """
